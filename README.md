@@ -8,7 +8,7 @@ TODO: add ruby gem link
 
 Clone this repository in command line:
 
-`git clone git://github.com/jaclync/githubCommitParser`
+`git clone git://github.com/jaclync/github-csv-changelog.git`
 
 # Generating Access Token
 
@@ -25,13 +25,13 @@ Save the token securely (e.g. 1Password) and paste the token to [`token` option]
 ## API
 Here's a command you can run from your terminal to generate a token via curl:
 
-    curl -v -u USERNAME -X POST https://api.github.com/authorizations --data "{\"scopes\":[\"repo\", \"user\"], \"note\": \"Github commit parser.\"}"
+    curl -v -u #{USERNAME} -X POST https://api.github.com/authorizations --data "{\"scopes\":[\"repo\", \"user\"], \"note\": \"Github commit parser.\"}"
 
 Where USERNAME is your Github username. Save the token generated securely and paste the token to [`token` option](#token).
 
 If 2-factor is enabled on your account (strongly recommended), this will return 401 error code, use:
 
-    curl -v -u USERNAME -H "X-GitHub-OTP: OTPCODE" -X POST https://api.github.com/authorizations --data "{\"scopes\":[\"repo\", \"user"], \"note\": \"Github commit parser.\"}"
+    curl -v -u USERNAME -H "X-GitHub-OTP: OTPCODE" -X POST https://api.github.com/authorizations --data "{\"scopes\":[\"repo\", \"user\"], \"note\": \"Github commit parser.\"}"
 
 Where OTPCODE is the code your authenticator app shows you.
 
@@ -49,12 +49,12 @@ There are two recommended ways to specify token:
 
 # Options
 
-*   `"--apiToken" / "TOKEN"` {#token}
+*   `"--api_token" / "TOKEN"` {#token}
 
     You must enter your GitHub token here, or set it in environment variable under `COMMIT_PARSER_API_TOKEN`.
     If not specified, it will prompt you to generate a token for the first time.
 
-*   `"--repoOwner" / "REPO_OWNER"`
+*   `"--repo_owner" / "REPO_OWNER"`
 
     Repo owner where a Github repo has path `#{repo owner}/#{repo name}`
 
@@ -62,25 +62,25 @@ There are two recommended ways to specify token:
 
     Repo name where a Github repo has path `#{repo owner}/#{repo name}`
 
-*   `"--exportCSVPath" / "EXPORT_CSV_PATH"`
+*   `"--export_CSV_path" / "EXPORT_CSV_PATH"`
 
     Path where CSV file is generated (overwritten if it existed before).
 
-*   `"--branch1" / "BRANCH_1"`
+*   `"--branch_1" / "BRANCH_1"`
 
     The base branch where commits start.
 
-*   `"--branch2" / "BRANCH_2"`
+*   `"--branch_2" / "BRANCH_2"`
 
     The base branch where commits end.
 
-*   `"--pullRequestRegexByField" / "PR_REGEX_BY_FIELD"`
+*   `"--pull_request_regex_by_field" / "PR_REGEX_BY_FIELD"`
 
     This is probably the trickiest of all options.
     Optionally, a JSON dictionary is provided here to specify how to parse a pull request description via Regex given a CSV field. This highly depends on the extra fields you could extract usually from your Github pull request template.
     Example:
     ```
-    --pullRequestRegexByField='{"What changed": "### Description of change([^?!###]+)", "Test plan": "### Test Plan([^?!###]+)" }'
+    --pull_request_regex_by_field='{"What changed": "### Description of change([^?!###]+)", "Test plan": "### Test Plan([^?!###]+)" }'
     ```
     allows the script to extra two fields ("What changed" and "Test plan") from a pull request given the following pull request template ([instruction](https://help.github.com/articles/creating-a-pull-request-template-for-your-repository/) on how to create one):
     ```
@@ -97,7 +97,7 @@ There are two recommended ways to specify token:
 
 # Usage
 
-`ruby githubCommitParser.rb --apiToken=#{your access token} --repoOwner="repo owner" --repo="repo name" --exportCSVPath="./github_commits.csv" --branch1="release-3.9" --branch2="release-3.10" --pullRequestRegexByField='{"What changed": "### Description of change([^?!###]+)", "QA plan": "### Test Plan([^?!###]+)" }'`
+`ruby github_csv_changelog.rb --apiToken=#{your access token} --repoOwner="repo owner" --repo="repo name" --exportCSVPath="./github_commits.csv" --branch1="release-3.9" --branch2="release-3.10" --pullRequestRegexByField='{"What changed": "### Description of change([^?!###]+)", "QA plan": "### Test Plan([^?!###]+)" }'`
 
 # Future work
 
@@ -109,5 +109,5 @@ More error handling, e.g.:
 
 # Information
 
-Source: https://github.com/jaclync/githubCommitParser
+Source: https://github.com/jaclync/github-csv-changelog
 Author: [Jaclyn Chen](https://github.com/jaclync/)
