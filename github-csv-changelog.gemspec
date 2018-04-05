@@ -1,6 +1,6 @@
 Gem::Specification.new do |s|
   s.name        = 'github-csv-changelog'
-  s.version     = '0.0.0'
+  s.version     = '0.0.1'
   s.date        = '2018-04-05'
   s.summary     = "Parses Github commits and exports to CSV."
   s.description = "Most useful for squash merge commits on Github - this gem links pull request from each commit between two branches, and extracts information from pull request."
