@@ -165,6 +165,7 @@ end
 
 # Parses http response as JSON and returns body field.
 def parse_http_response(response)
+  puts JSON.parse(response.body)
   raise "Network error: #{response.code}" unless response.code == "200"
   body = JSON.parse(response.body)
   return body
@@ -188,86 +189,88 @@ def get_token_from_environment_variable(key)
 end
 
 # /// Beginning of script. ///
-options = {}
-OptionParser.new do |opt|
-  opt.on('--api_token TOKEN') { |o| options[:access_token] = o }
-  opt.on('--repo_owner REPO_OWNER') { |o| options[:repo_owner] = o }
-  opt.on('--repo REPO') { |o| options[:repo] = o }
-  opt.on('--export_CSV_path EXPORT_CSV_PATH') { |o| options[:export_CSV_path] = o }
-  opt.on('--branch_1 BRANCH_1') { |o| options[:branch_1] = o }
-  opt.on('--branch_2 BRANCH_2') { |o| options[:branch_2] = o }
-  opt.on('--pull_request_regex_by_field PR_REGEX_BY_FIELD') { |o| options[:pull_request_regex_by_field] = o }
-end.parse!
+def main
+  options = {}
+  OptionParser.new do |opt|
+    opt.on('--api_token TOKEN') { |o| options[:access_token] = o }
+    opt.on('--repo_owner REPO_OWNER') { |o| options[:repo_owner] = o }
+    opt.on('--repo REPO') { |o| options[:repo] = o }
+    opt.on('--export_CSV_path EXPORT_CSV_PATH') { |o| options[:export_CSV_path] = o }
+    opt.on('--branch_1 BRANCH_1') { |o| options[:branch_1] = o }
+    opt.on('--branch_2 BRANCH_2') { |o| options[:branch_2] = o }
+    opt.on('--pull_request_regex_by_field PR_REGEX_BY_FIELD') { |o| options[:pull_request_regex_by_field] = o }
+  end.parse!
 
-# Reads from command options.
-access_token = options[:access_token]
-repo_owner = options[:repo_owner]
-repo = options[:repo]
-export_CSV_path = options[:export_CSV_path]
-branch_1 = options[:branch_1]
-branch_2 = options[:branch_2]
-if !options[:pull_request_regex_by_field].nil?
-	pull_request_regex_by_field = JSON.parse(options[:pull_request_regex_by_field])
-end
+  # Reads from command options.
+  access_token = options[:access_token]
+  repo_owner = options[:repo_owner]
+  repo = options[:repo]
+  export_CSV_path = options[:export_CSV_path]
+  branch_1 = options[:branch_1]
+  branch_2 = options[:branch_2]
+  if !options[:pull_request_regex_by_field].nil?
+    pull_request_regex_by_field = JSON.parse(options[:pull_request_regex_by_field])
+  end
 
-# If user did not provide access token via command options, try a few things in order:
-# 1) try reading from environment variable if user chose to set it before.
-# 2) user probably calls script for the first time. In this case, start asking for basic
-#    auth (username, password), and requesting One-Time Password (OTP) for 2-factor auth.
-#    After a GitHub API token is generated, prompt user to save token safely:
-#    - save to 1Password and provide token via command options `--api_token=#{token}`
-#    - provide instruction to save token to local environment variable to `COMMIT_PARSER_API_TOKEN_ENV_KEY`
+  # If user did not provide access token via command options, try a few things in order:
+  # 1) try reading from environment variable if user chose to set it before.
+  # 2) user probably calls script for the first time. In this case, start asking for basic
+  #    auth (username, password), and requesting One-Time Password (OTP) for 2-factor auth.
+  #    After a GitHub API token is generated, prompt user to save token safely:
+  #    - save to 1Password and provide token via command options `--api_token=#{token}`
+  #    - provide instruction to save token to local environment variable to `COMMIT_PARSER_API_TOKEN_ENV_KEY`
 
-# 1) Tries reading environment variable.
-if access_token.nil? || access_token.empty?
-  access_token = get_token_from_environment_variable(COMMIT_PARSER_API_TOKEN_ENV_KEY)
-end
+  # 1) Tries reading environment variable.
+  if access_token.nil? || access_token.empty?
+    access_token = get_token_from_environment_variable(COMMIT_PARSER_API_TOKEN_ENV_KEY)
+  end
 
-# 2) Starts requesting for API token.
-if access_token.nil? || access_token.empty?
-  username = prompt "Your GitHub username: "
-  password = prompt_sensitive_info "Your GitHub password: "
-  print "\n"
-  otp_requested = request_2factor_passcode(username, password)
-  if otp_requested
-    one_time_passcode = prompt "Your GitHub One-Time Password: "
-    access_token = get_token_with_2factor_otp(username, password, one_time_passcode)
-    if !(access_token.nil? || access_token.empty?)
-      puts "🔑 Token fetched! Your token is: #{access_token}"
-    end
-    if access_token.nil? || access_token.empty?
-      puts "Please check for access token for entry with '#{GITHUB_API_NOTE}' at https://github.com/settings/tokens and regenerate access token if already exists."
-      access_token = prompt_sensitive_info "Your personal token for GithubCommitParser: "
-    end
-    if !(access_token.nil? || access_token.empty?)
-      puts "This is like a password and please save it safely like in 1Password for future access to Github API."
-      puts "Next time running this, you can provide this token via --api_token option, or you can save it to your environment variable via command line by running:"
-      puts "export COMMIT_PARSER_API_TOKEN=#{access_token}"
-      puts "(If using zsh, add this export to the zshrc file.)"
+  # 2) Starts requesting for API token.
+  if access_token.nil? || access_token.empty?
+    username = prompt "Your GitHub username: "
+    password = prompt_sensitive_info "Your GitHub password: "
+    print "\n"
+    otp_requested = request_2factor_passcode(username, password)
+    if otp_requested
+      one_time_passcode = prompt "Your GitHub One-Time Password: "
+      access_token = get_token_with_2factor_otp(username, password, one_time_passcode)
+      if !(access_token.nil? || access_token.empty?)
+        puts "🔑 Token fetched! Your token is: #{access_token}"
+      end
+      if access_token.nil? || access_token.empty?
+        puts "Please check for access token for entry with '#{GITHUB_API_NOTE}' at https://github.com/settings/tokens and regenerate access token if already exists."
+        access_token = prompt_sensitive_info "Your personal token for GithubCommitParser: "
+      end
+      if !(access_token.nil? || access_token.empty?)
+        puts "This is like a password and please save it safely like in 1Password for future access to Github API."
+        puts "Next time running this, you can provide this token via --api_token option, or you can save it to your environment variable via command line by running:"
+        puts "export COMMIT_PARSER_API_TOKEN=#{access_token}"
+        puts "(If using zsh, add this export to the zshrc file.)"
+      end
     end
   end
-end
 
-if access_token.nil? || access_token.empty?
-  abort("Sorry, we need a token to proceed. Please try again.")
-end
+  if access_token.nil? || access_token.empty?
+    abort("Sorry, we need a token to proceed. Please try again.")
+  end
 
-# Asks user for export path, repo owner, repo, and branches info if not provided in options.
-if repo_owner.nil? || repo_owner.empty?
-  repo_owner = prompt "Repo owner (repository url is 'repo_owner/repo'): "
-end
-if repo.nil? || repo.empty?
-  repo = prompt "Repo (repository url is 'repo_owner/repo'): "
-end
-if export_CSV_path.nil? || export_CSV_path.empty?
-  export_CSV_path = prompt "Path to export CSV (e.g. ~/Desktop): "
-end
-if branch_1.nil? || branch_1.empty?
-  branch_1 = prompt "From branch: "
-end
-if branch_2.nil? || branch_2.empty?
-  branch_2 = prompt "To branch: "
-end
+  # Asks user for export path, repo owner, repo, and branches info if not provided in options.
+  if repo_owner.nil? || repo_owner.empty?
+    repo_owner = prompt "Repo owner (repository url is 'repo_owner/repo'): "
+  end
+  if repo.nil? || repo.empty?
+    repo = prompt "Repo (repository url is 'repo_owner/repo'): "
+  end
+  if export_CSV_path.nil? || export_CSV_path.empty?
+    export_CSV_path = prompt "Path to export CSV (e.g. ~/Desktop): "
+  end
+  if branch_1.nil? || branch_1.empty?
+    branch_1 = prompt "From branch: "
+  end
+  if branch_2.nil? || branch_2.empty?
+    branch_2 = prompt "To branch: "
+  end
 
-commits = get_commits_between_two_branches(repo_owner, repo, branch_1, branch_2, access_token)
-export_commits_to_CSV(commits, repo_owner, repo, access_token, pull_request_regex_by_field, export_CSV_path)
+  commits = get_commits_between_two_branches(repo_owner, repo, branch_1, branch_2, access_token)
+  export_commits_to_CSV(commits, repo_owner, repo, access_token, pull_request_regex_by_field, export_CSV_path)
+end
