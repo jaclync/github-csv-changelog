@@ -2,7 +2,7 @@
 
 ## Package Control (recommended)
 
-TODO: add ruby gem link
+`gem install github-csv-changelog`
 
 ## Manual installation
 
